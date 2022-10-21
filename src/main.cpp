@@ -1,62 +1,37 @@
-#include <Adafruit_BMP280.h>
-#include <Wire.h>
-#include <SPI.h>
 #include <M5Stack.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
+// Data wire is plugged into port 33 on the ESP32
+#define ONE_WIRE_BUS 33
 
-#define BMP_SCK G18
-#define BMP_MISO G19
-#define BMP_MOSI G23
-#define BMP_CS G5
+// Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
+OneWire oneWire(ONE_WIRE_BUS);
 
-Adafruit_BMP280 bmp(BMP_CS);
-unsigned long delayTime;
+// Pass our oneWire reference to Dallas Temperature. 
+DallasTemperature sensors(&oneWire);
+
 void printValues();
 
 void setup() {
-  /* シリアル初期化 */
-  Serial.begin(9600);
-  Serial.println("BMP280 Test");
 
+  // start serial port
+  Serial.begin(115200);
+  Serial.println("DS18B20 Test");
 
-  /* BME280初期化 */
-  if (! bmp.begin()) {
-     Serial.println("Could not find a valid BMP280 sensor, check wiring!");
-     while (1);
-  }
-
-  Serial.println("-- Default Test --");
-  Serial.println("normal mode, 16x oversampling for all, filter off,");
-  Serial.println("0.5ms standby period");
-  delayTime = 5000;
+  // Start up the library
+  sensors.begin();
 }
 
 void loop() {
-    printValues();
-    delay(delayTime);
-}
+  // call sensors.requestTemperatures() to issue a global temperature 
+  // request to all devices on the bus
+  Serial.print("Requesting temperatures...");
+  sensors.requestTemperatures(); // Send the command to get temperatures
+  Serial.println("DONE");
 
-/* データ表示 */
-void printValues() {
-/* 温度表示 */
-  Serial.print("Temperature = ");
-  Serial.print(bmp.readTemperature());
-  Serial.println(" *C");
+  Serial.print("Temperature for the device 1 (index 0) is: ");
+  Serial.println(sensors.getTempCByIndex(0));
 
-/* 気圧表示 */
-  Serial.print("Pressure = ");
-  Serial.print(bmp.readPressure() / 100.0F);
-  Serial.println(" hPa");
-
-/* 気圧表示 */
-  Serial.print("Altitude = ");
-  Serial.print(bmp.readAltitude());
-  Serial.println(" %");
-
-/* 湿度表示 */
-  // Serial.print("Humidity = ");
-  // Serial.print(bmp.readHumidity());
-  // Serial.println(" %");
-
-  Serial.println();
+  delay(5000);
 }
